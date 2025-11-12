@@ -55,7 +55,7 @@ date_graph_end <- as.Date("2025-12-01", format = "%Y-%m-%d")
 plot <- df %>%
   filter(labProtocolID == "SC_COV_4.1") %>%
   filter(measure == "SARS-CoV-2 E gene") %>%
-  filter(date > date_graph_start & date < date_reporting) %>%
+  filter(date > date_graph_start & date < date_reporting+1) %>%
   filter(siteName %in% c("Aalst", "Oostende")) %>%
   ggplot(aes(x = date, y = value, group = siteName, color = siteName)) +
   geom_point(na.rm = T) +
@@ -66,3 +66,5 @@ plot
 # save
 ggsave(file="./plot/graph_oostende_aalst.png",
        plot, width = 21, height = 12, dpi = 200)
+
+cat("- Success : graph saved \n")
