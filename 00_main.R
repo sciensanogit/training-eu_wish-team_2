@@ -25,6 +25,15 @@ source("mission1_1-member2.R")
 # Source member MG script
 source("mission1_1-MG.R")
 
+# Source member AJ script
+source("mission1_AJ.R")
+
+# Source member FG script
+
+# Source member LD script
+
+
+
 # Mission 1_2 ----
 # produce visuals
 source("mission1_2.R")
