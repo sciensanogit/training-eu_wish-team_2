@@ -29,6 +29,7 @@ source("mission1_1-MG.R")
 source("mission1_AJ.R")
 
 # Source member FG script
+source("mission1_FG.R")
 
 # Source member LD script
 
