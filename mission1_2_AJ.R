@@ -49,7 +49,10 @@ df$date <- as.Date(df$date, dormat = "%Y-%m-%d")
 # set dates
 date_reporting <- as.Date("2025-09-01", format = "%Y-%m-%d")
 date_graph_start <- as.Date("2024-09-01", format = "%Y-%m-%d")
-date_graph_end <- as.Date("2025-12-01", format = "%Y-%m-%d")
+date_graph_end <- as.Date("2025-12-01", format = "%Y-%m-%d") 
+
+#prijevod
+
 
 # produce graph ----
 plot <- df %>%
@@ -68,3 +71,6 @@ ggsave(file="./plot/graph_oostende_aalst.png",
        plot, width = 21, height = 12, dpi = 200)
 
 cat("- Success : graph saved \n")
+
+
+
