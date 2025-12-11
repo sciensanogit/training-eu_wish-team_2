@@ -20,10 +20,20 @@ input_file <- "Belgium_export-nation.csv"
 nation <- read.csv(input_file)
 
 nation <- read.csv(input_file, sep = ";")
+nation$date <- as.Date(nation$date)
+
 
 # create folder if not existing
+if (!dir.exists("Mission2")) {
+  dir.create("Mission2")
+}
+
 
 # graph at national level
+
+cat("- This script was coded by member FG\n")
+
+
 
 # save graph
 
