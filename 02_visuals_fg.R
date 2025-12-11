@@ -70,4 +70,7 @@ pvalue <- nation |>
   )
 print(pvalue)
 
+install.packages("ggthemes")
+library(ggthemes)
+
 # save graph
