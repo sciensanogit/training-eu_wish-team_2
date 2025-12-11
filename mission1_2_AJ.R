@@ -41,16 +41,24 @@ df <- df %>%
 
 # format date
 df$date <- as.POSIXct(df$collDTStart, format = "%Y-%m-%dT%H:%M:%S")
-df$date <- format(df$date, "%Y-%m-%d")
+df$date <- as.Date(df$date, dormat = "%Y-%m-%d")
 
 # compute viral ratio
 # unique(df$measure) ...
 
-# graph
+# set dates
+date_reporting <- as.Date("2025-09-01", format = "%Y-%m-%d")
+date_graph_start <- as.Date("2024-09-01", format = "%Y-%m-%d")
+date_graph_end <- as.Date("2025-12-01", format = "%Y-%m-%d") 
+
+#prijevod
+
+
+# produce graph ----
 plot <- df %>%
   filter(labProtocolID == "SC_COV_4.1") %>%
   filter(measure == "SARS-CoV-2 E gene") %>%
-  filter(date > "2024-09-01" & date < "2025-09-01") %>%
+  filter(date > date_graph_start & date < date_reporting+1) %>%
   filter(siteName %in% c("Aalst", "Oostende")) %>%
   ggplot(aes(x = date, y = value, group = siteName, color = siteName)) +
   geom_point(na.rm = T) +
@@ -61,3 +69,8 @@ plot
 # save
 ggsave(file="./plot/graph_oostende_aalst.png",
        plot, width = 21, height = 12, dpi = 200)
+
+cat("- Success : graph saved \n")
+
+
+

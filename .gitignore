@@ -39,8 +39,9 @@ vignettes/*.pdf
 # R Environment Variables
 .Renviron
 
-# pkgdown site
+# folders
 docs/
+mission2_files/
 
 # translation temp files
 po/*~
@@ -50,4 +51,6 @@ rsconnect/
 
 # files
 *.png
-*.csv
+*.html
+*.docx
+*.log
