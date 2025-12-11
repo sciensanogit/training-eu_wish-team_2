@@ -70,7 +70,6 @@ pvalue <- nation |>
   )
 print(pvalue)
 
-
 # save graph
 
 
