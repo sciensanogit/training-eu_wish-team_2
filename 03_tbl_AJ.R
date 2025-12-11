@@ -74,6 +74,7 @@ df_date_check <- df_nation %>%
   mutate(date_converted = as.Date(date, format = "%Y-%m-%d"))
 
 print(dim(df_date_check))
+
 print(head(df_date_check))
 
 print(sum(is.na(df_date_check$date_converted)))
