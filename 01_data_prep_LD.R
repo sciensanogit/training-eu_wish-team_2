@@ -25,18 +25,21 @@ invisible(lapply(pkgs, FUN = library, character.only = TRUE))
 #| measure is the target measured
 #| value is the result
 
-df$collDTStart <- as.Date(df$collDTStart)
-df$date <- as.Date(df$collDTStart)
-
 # sars-cov-2 data
 df_sc <- read.csv("https://data.geo.be/ws/sciensano/wfs?SERVICE=WFS&REQUEST=GetFeature&VERSION=2.0.0&TYPENAMES=sciensano:wastewatertreatmentplantscovid&outputFormat=csv")
 
 # pmmv data
 df_pmmv <- read.csv("https://data.geo.be/ws/sciensano/wfs?SERVICE=WFS&REQUEST=GetFeature&VERSION=2.0.0&TYPENAMES=sciensano:wastewatertreatmentplantspmmv&outputFormat=csv")
 
+
 # join both
 df <- df_sc %>%
   rbind(df_pmmv)
+
+
+df$collDTStart <- as.Date(df$collDTStart)
+df$date <- as.Date(df$collDTStart)
+
 
 # clean data
 df <- df %>%
@@ -105,13 +108,6 @@ df <- df %>%
     value = ifelse(Quality == "Quality concerns", NA_real_, value)
   )
 
-# Step 3: Check results
-table(df$Quality, is.na(df$value))
-
-
-
-
-
 # Step 3: Optional check — view how many values were filtered
 table(df$Quality, is.na(df$value))
 
@@ -119,7 +115,7 @@ table(df$Quality, is.na(df$value))
 
 # compute mean of replicated analysis of each measure
 df_mean <- df %>%
-  group_by(siteName, collDTStart, measure) %>%
+  group_by(siteName, collDTStart, measure, popServ) %>%
   summarize(
     mean_value = mean(value, na.rm = TRUE),
     .groups = "drop"
@@ -128,16 +124,27 @@ df_mean <- df %>%
 # View result
 head(df_mean)
 
-# Pivot to wide format
-df_wide <- df_mean %>%
+library(tidyr)
+library(dplyr)
+
+df_ratio <- df_mean %>%
   pivot_wider(
     names_from = measure,
     values_from = mean_value
   )
 
-df_wide <- df_wide %>%
+# 2. Compute SARS/PMMV ratio
+df_ratio <- df_ratio %>%
   mutate(
     value_pmmv = ifelse(!is.na(SARS) & !is.na(PMMV) & PMMV > 0, SARS / PMMV, NA_real_)
+  )
+
+# 3. (Optional) Convert back to long format
+df_long <- df_ratio %>%
+  pivot_longer(
+    cols = c(SARS, PMMV, value_pmmv),
+    names_to = "measure",
+    values_to = "value"
   )
 
 
@@ -148,7 +155,7 @@ df_wide <- df_wide %>%
 library(zoo)
 
 # Compute 14-day moving average of the SARS/PMMV ratio per site
-df_ma <- df_wide %>%
+df_ma <- df_ratio %>%
   arrange(siteName, collDTStart) %>%
   group_by(siteName) %>%
   mutate(
