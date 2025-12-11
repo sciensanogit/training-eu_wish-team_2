@@ -34,6 +34,19 @@ source("mission1_FG.R")
 # Source member LD script
 
 
+#Session 2
+
+#source 01_data_prep.R
+source("1_data_prep_LD.R")
+
+#source 02_visuals.R
+source("02_visuals_fg.R")
+
+#source 03_tbl.R
+source("03_visuals_AJ.R")
+
+#source 04_quarto
+
 
 # Mission 1_2 ----
 # produce visuals
