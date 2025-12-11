@@ -34,11 +34,12 @@ df_tbl_data <- df_nation %>%
   } %>%
   
   #filter day of week
-  mutate(day_of_week = wday(date, label = TRUE, week_start = 1)) %>%
+  mutate(day_of_week = wday(date, label = TRUE, week_start = 1, locale = "en")) %>%
   
   #filter monday
   filter(day_of_week == "Mon") %>%
   
+
   select(date, value_pmmv) %>%
   
   arrange(desc(date)) %>%
@@ -53,7 +54,7 @@ tbl_nation <- df_tbl_data %>%
     value_pmmv = "National Viral Ratio (SARS/PMMV)"
   ) %>%
   
-  colformat_date(j = "date", fmt = "%d.%m.%Y") %>%
+  colformat_date(j = "date", fmt = "%Y-%m-%d") %>%
   
   colformat_num(j = "value_pmmv", digits = 3) %>%
   
@@ -69,3 +70,10 @@ save_as_docx(tbl_nation, path = "./national_viral_ratio_last_10_mondays_table.do
 # display msg
 cat("- Success : tables saved \n")
 
+df_date_check <- df_nation %>%
+  mutate(date_converted = as.Date(date, format = "%Y-%m-%d"))
+
+print(dim(df_date_check))
+print(head(df_date_check))
+
+print(sum(is.na(df_date_check$date_converted)))
