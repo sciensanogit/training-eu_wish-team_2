@@ -88,28 +88,111 @@ df <- df %>%
 
 unique(df$siteName)
 
-# apply LOQ provided by the lab
+# Step 1: Create Quality column BEFORE removing or changing values
 df <- df %>%
   mutate(
-    value = case_when(
-      measure == "PMMV" & value < 250 ~ NA_real_,
-      measure == "SARS" & value < 8   ~ NA_real_,
-      TRUE ~ value
+    Quality = case_when(
+      measure == "PMMV" & value < 250 ~ "Quality concerns",
+      measure == "SARS" & value < 8   ~ "Quality concerns",
+      is.na(value)                    ~ "Missing",
+      TRUE                            ~ "OK"
     )
   )
-table(df$measure, is.na(df$value))
 
+# Step 2: Set values with "Quality concerns" to NA
+df <- df %>%
+  mutate(
+    value = ifelse(Quality == "Quality concerns", NA_real_, value)
+  )
+
+# Step 3: Check results
+table(df$Quality, is.na(df$value))
+
+
+
+
+
+# Step 3: Optional check — view how many values were filtered
+table(df$Quality, is.na(df$value))
 
 # remove outliers
 
 # compute mean of replicated analysis of each measure
+df_mean <- df %>%
+  group_by(siteName, collDTStart, measure) %>%
+  summarize(
+    mean_value = mean(value, na.rm = TRUE),
+    .groups = "drop"
+  )
 
-# compute viral ratio
+# View result
+head(df_mean)
+
+# Pivot to wide format
+df_wide <- df_mean %>%
+  pivot_wider(
+    names_from = measure,
+    values_from = mean_value
+  )
+
+df_wide <- df_wide %>%
+  mutate(
+    value_pmmv = ifelse(!is.na(SARS) & !is.na(PMMV) & PMMV > 0, SARS / PMMV, NA_real_)
+  )
+
+
 # unique(df$measure) ...
 
 # compute moving average on past 14 days
+# Load zoo if not already loaded
+library(zoo)
+
+# Compute 14-day moving average of the SARS/PMMV ratio per site
+df_ma <- df_wide %>%
+  arrange(siteName, collDTStart) %>%
+  group_by(siteName) %>%
+  mutate(
+    value_pmmv_ma = rollapply(
+      value_pmmv,
+      width = 14,
+      FUN = mean,
+      align = "right",
+      fill = NA,
+      na.rm = TRUE
+    )
+  ) %>%
+  ungroup()
+
+head(df_ma %>% select(siteName, collDTStart, value_pmmv, value_pmmv_ma))
+
 
 # natinoal aggregation: compute weighted mean with factor being the population served by each site
+# Aggregate to national level using weighted mean (per date)
+df_national <- df_ma %>%
+  group_by(collDTStart) %>%
+  summarize(
+    national_value_pmmv_ma = weighted.mean(value_pmmv_ma, w = popServ, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+ref_meta <- read.csv("./Belgium_export-nation.csv")
+str(ref_meta)
+names(ref_meta)
+
+
+df_export <- df_national %>%
+  rename(date = collDTStart) %>%
+  mutate(
+    country = "Belgium",
+    unit = "ratio",
+    indicator = "SARS/PMMV 14d"
+  ) %>%
+  select(date, value = national_value_pmmv_ma, country, unit, indicator)
+
+
+head(df_export)
+write.csv(df_export, "./Belgium_export-nation_NEW.csv", row.names = FALSE)
+
 
 # export data ----
 # create folder if not existing
@@ -119,6 +202,23 @@ table(df$measure, is.na(df$value))
 # export as xls
 
 # export as rds
+
+# Load necessary package for Excel export
+library(openxlsx)
+
+# Step 1: Create './data' folder if it doesn't exist
+if (!dir.exists("data")) {
+  dir.create("data")
+}
+
+# Step 2: Export to CSV (.csv)
+write.table(df_export, file = "./data/Belgium_export-nation.csv", sep = ",", row.names = FALSE)
+
+# Step 3: Export to Excel (.xlsx)
+write.xlsx(df_export, file = "./data/Belgium_export-nation.xlsx", rowNames = FALSE)
+
+# Step 4: Export to RDS (.rds)
+saveRDS(df_export, file = "./data/Belgium_export-nation.rds")
 
 
 # display msg
