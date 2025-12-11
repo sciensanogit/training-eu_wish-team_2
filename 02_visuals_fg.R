@@ -31,11 +31,9 @@ if (!dir.exists("Mission2")) {
 
 # graph at national level
 
-cat("- This script was coded by member FG\n")
 
 
 
 # save graph
 
-# display msg
-cat("- Success : visuals saved \n")
+
