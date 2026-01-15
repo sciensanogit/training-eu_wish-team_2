@@ -1,78 +1,91 @@
 ###############################################################################
 # Aim ----
-#Produce national tables for Quarto
-#load Belgium national data
-#keep last 10 MONDAY sampling dates
-#last date = date_reporting
-#nice headers, units, digits
-#test different flextable themes
+# Produce national tables for Quarto
+# load Belgium national data
+# keep last 10 MONDAY sampling dates
+# last date = date_reporting
+# nice headers, units, digits
+# test different flextable themes
 ###############################################################################
 
-# Load packages ----
-pkgs <- c("dplyr", "lubridate", "flextable", "readr")
+# 0) Load packages ----
+pkgs <- c("dplyr", "lubridate", "flextable", "readr", "stringr")
 install.packages(setdiff(pkgs, rownames(installed.packages())))
 invisible(lapply(pkgs, library, character.only = TRUE))
 
-# Load data ----
-path_main <- "./data/Belgium_export-nation.csv"
-df_nation <- readr::read_csv(path_main) 
+# 1) Load data from required locations ----
+path1 <- ".data/Belgium_export-nation.csv"
+path2 <- "Belgium_export-nation.csv"   # fallback
 
-#pretvorara datum i dodaje weekday
-df_nation <- df_nation %>%
+if (file.exists(path1)) {
+  df_nation2 <- readr::read_delim(path1, delim = ";", show_col_types = FALSE)
+} else if (file.exists(path2)) {
+  df_nation2 <- readr::read_delim(path2, delim = ";", show_col_types = FALSE)
+} else {
+  stop("File not found. Expected .data/Belgium_export-nation.csv or Belgium_export-nation.csv")
+}
+
+# 2) Read date_reporting safely from 01_data_prep.R ----
+if (!file.exists("01_data_prep.R")) {
+  stop("File 01_data_prep.R not found")
+}
+
+lines <- readLines("01_data_prep.R", warn = FALSE)
+
+line_idx <- grep("^\\s*date_reporting\\s*<-", lines)
+if (length(line_idx) == 0) stop("No line like 'date_reporting <- ...' found in 01_data_prep.R")
+
+dr_line <- lines[line_idx[1]]
+dr_value <- stringr::str_extract(dr_line, "\\d{4}-\\d{2}-\\d{2}")
+
+if (is.na(dr_value)) stop("date_reporting line found but wrong date format (YYYY-MM-DD).")
+
+date_reporting <- as.Date(dr_value)
+
+# 3) Prepare data + keep only Mondays + up to date_reporting ----
+needed_cols <- c("date", "value_pmmv")
+missing_cols <- setdiff(needed_cols, names(df_nation2))
+if (length(missing_cols) > 0) stop(paste("Missing columns:", paste(missing_cols, collapse = ", ")))
+
+df_tbl <- df_nation2 %>%
   mutate(
-    date = as.character(date),  # prvo u character
-    date = dmy(date),            # onda u Date
-    weekday = wday(date, label = TRUE, week_start = 1)
-  )
-
-# filtrira samo mondays
-df_nation_mon <- df_nation %>%
-  filter(weekday == "Mon")
-
-# keep last reporting date ----
-date_reporting <- max(df_nation_mon$date, na.rm = TRUE)
-
-# select last 10 dates ----
-tbl_data <- df_nation_mon %>%
+    date = as.character(`date`),  # force character
+    date = dmy(date),             # convert to Date (dd/mm/yyyy or dd-mm-yyyy)
+    value_pmmv = as.numeric(value_pmmv)
+  ) %>%
+  filter(!is.na(date)) %>%
+  filter(lubridate::wday(date, week_start = 1) == 1) %>%  # only Mondays
   filter(date <= date_reporting) %>%
   arrange(desc(date)) %>%
   slice_head(n = 10) %>%
-  arrange(date)
-library(dplyr)
-library(flextable)
-
-# Create flextable ----
-tbl_nation <- tbl_data %>%
+  arrange(date) %>%
   transmute(
-    sampling_date = format(date, "%d %b %Y"),           # mala slova, sigurno ime
-    national_viral_load = round(value_pmmv, 2)         # sigurno ime
-  ) %>%
-  flextable() %>%
-  set_header_labels(
-    sampling_date = "Sampling date",
-    national_viral_load = "National viral load (PMMoV-normalised)"
-  ) %>%
-  colformat_num(
-    j = "national_viral_load",   # koristi stvarno ime kolone, ne prikazno
-    digits = 2,
-    big.mark = " ",
-    decimal.mark = "."
-  ) %>%
+    `Sampling date (Monday)` = format(date, "%d %b %Y"),
+    `National viral ratio (PMMoV-normalized)` = value_pmmv
+  )
+
+# 4) Create flextable + formatting ----
+tbl_nation_Antea <- flextable(df_tbl) %>%
+  colformat_num(j = "National viral ratio (PMMoV-normalized)", digits = 4) %>%
+  align(align = "center", part = "all") %>%
+  fontsize(part = "body", size = 10) %>%
+  fontsize(part = "header", size = 10) %>%
   flextable::autofit()
 
-# Test themes (choose ONE for final use) ----
-tbl_nation_theme_vanilla <- tbl_nation %>% theme_vanilla()
-tbl_nation_theme_booktabs <- tbl_nation %>% theme_booktabs()
-tbl_nation_theme_box <- tbl_nation %>% theme_box()
+# Test themes ----
+tbl_nation_vanilla <- tbl_nation_Antea %>% theme_vanilla()
+zebra_tbl_nation_Antea <- tbl_nation_Antea %>% theme_zebra()  # chosen theme
 
-# FINAL table used by 04_quarto.R ----
-tbl_nation_final <- tbl_nation_theme_vanilla
+tbl_nation_Antea <- zebra_tbl_nation_Antea
 
-# Print table ----
-tbl_nation_final
+# 5) Save for Quarto ----
+if (!dir.exists(".data")) dir.create(".data")
+saveRDS(tbl_nation_Antea, file = ".data/tbl_nation_10_mondays_Antea.rds")
 
-# Message ----
-cat(
-  "- Success: national table created\n",
-  "- Last reporting date:", format(date_reporting, "%d %b %Y"), "\n"
-)
+# 6) Print & message ----
+tbl_nation_Antea
+
+cat(paste0(
+  "- Success: table saved -> .data/tbl_nation_10_mondays_Antea.rds (date_reporting = ",
+  as.character(date_reporting), ")\n"
+))
