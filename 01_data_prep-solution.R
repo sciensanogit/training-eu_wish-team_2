@@ -147,7 +147,7 @@ dir.create("./data", showWarnings = F)
 write.table(df_site_raw, file = "./data/Belgium_export-site_raw.csv", sep = ";", dec = ".",
             col.names = TRUE, row.names = FALSE)
 
-write.table(df_nation, file = "./data/Belgium_export-site.csv", sep = ";", dec = ".",
+write.table(df_site, file = "./data/Belgium_export-site.csv", sep = ";", dec = ".",
             col.names = TRUE, row.names = FALSE)
 
 write.table(df_nation, file = "./data/Belgium_export-nation.csv", sep = ";", dec = ".",
