@@ -28,7 +28,7 @@ ui <- navbarPage(
     # Custom CSS for green header bar
     tags$style(HTML("
     .top-bar {
-      background-color: #e8f5e9;
+      background-color: #1F77B4;
       padding: 15px;
       margin-bottom: 20px;
       border-radius: 5px;
@@ -39,7 +39,7 @@ ui <- navbarPage(
       font-weight: bold;
     }
     .info-box {
-      background-color: #4CAF50;
+      background-color: #1F77B4;
       padding: 15px;
       border-radius: 5px;
       text-align: center;
@@ -51,15 +51,45 @@ ui <- navbarPage(
     
     # Bottom acknowledgment box
     div(class = "info-box",
-        "Welcome to this nice page describing..." )
+        "Welcome to this nice page describing wastewater surveillance data on SARS-CoV-2" )
   ),
   
+  tabPanel(
+    "Influenza",
+    # Custom CSS for green header bar
+    tags$style(HTML("
+     .top-bar {
+      background-color: #1F77B4;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 5px;
+      color: white;
+    }
+    .top-bar label {
+      color: white;
+      font-weight: bold;
+    }
+    .info-box {
+      background-color: #FFD700;
+      padding: 15px;
+      border-radius: 5px;
+      text-align: center;
+      font-weight: bold;
+      border: 1px solid #c8e6c9;
+      margin-bottom: 20px;
+    }
+  ")),
+    
+    # Bottom acknowledgment box
+    div(class = "info-box",
+        "In 2027 data will be added here" )
+  ),
   
   tabPanel(
     "SARS-CoV-2",
     # Bottom acknowledgment box
     div(class = "info-box",
-        "Add a description of the surveillance..." )
+        "The surveillance of data on SARS-CoV-2 is presented" )
     ,
     
     # Three horizontal info boxes
@@ -86,12 +116,14 @@ ui <- navbarPage(
     
     # Bottom acknowledgment box
     div(class = "info-box",
-        "Acknowledgment: to be filled" )
+        "Acknowledgment: Croatia team (CIPH)" )
     
   )
   
   
 )
+
+
 
 # server ----
 server <- function(input, output, session) {
@@ -105,7 +137,8 @@ server <- function(input, output, session) {
     data <- filtered_data()
     
     p <- ggplot(data, aes(x = date)) +
-      geom_point(aes(y = value_pmmv), colour = "#92D050", size = 1, na.rm = T) +
+      geom_point(aes(y = value_pmmv), colour = "#1F77B4", size = 1, na.rm = T) +
+      geom_line(aes(y = value_pmmv_avg14d_past), colour = "#BCCF00FF", linewidth = 1, na.rm = TRUE) +
       scale_y_continuous(limits = c(0, NA)) +
       labs(
         title = paste(input$site),
@@ -117,5 +150,8 @@ server <- function(input, output, session) {
   })
 }
 
+
+
 # shinyApp ----
 shinyApp(ui, server)
+
