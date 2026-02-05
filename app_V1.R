@@ -4,15 +4,19 @@ install.packages(setdiff(pkgs, rownames(installed.packages())))
 invisible(lapply(pkgs, FUN = library, character.only = TRUE))
 
 # load data ----
-# load nation data
-df_nation <- read.csv2("./data/Belgium_export-nation.csv", sep = ";")
+# load nation data (ensure it has siteName = "Belgium" for dropdown)
+df_nation <- read.csv2("./data/Belgium_export-nation.csv", sep = ";") %>%
+  select(date, value_pmmv, value_pmmv_avg14d_past) %>%
+  mutate(siteName = "Belgium")
 
 # load the data by site and select appropriate variables
-# df_site <- read.csv2("??.csv", sep = ";") %>%
-#   select(??)
+df_site <- read.csv2("./data/Belgium_export-site.csv", sep = ";") %>%
+  select(date, siteName, value_pmmv, value_pmmv_avg14d_past)
 
-# bind nation and site data
-df <- rbind(df_nation)
+# join (stack) nation + site data
+df <- bind_rows(df_nation, df_site)
+
+
 
 # clean data
 df$date <- as.Date(df$date)
